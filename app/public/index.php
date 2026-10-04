@@ -5,20 +5,44 @@ declare(strict_types=1);
 require __DIR__ . '/../vendor/autoload.php';
 
 use App\Database;
+use App\Log;
+use App\Model\BoardColumn;
+use Illuminate\Support\Collection;
 
-// Обработка формы добавления записи. Редиректим после POST (Post/Redirect/Get),
+Database::boot();
+$logger = Log::logger();
+
+// Логируем каждый входящий запрос: метод, URI, статус и тело ответа
+$logRequest = static function (int $status, string $body) use ($logger): void {
+  $logger->info('request', [
+    'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+    'uri' => $_SERVER['REQUEST_URI'] ?? '',
+    'status' => $status,
+    'body' => $body,
+  ]);
+};
+
+// Обработка формы добавления колонки. Редиректим после POST (Post/Redirect/Get),
 // чтобы повторная отправка формы не происходила при обновлении страницы
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['note'])) {
-  try {
-    $pdo = Database::connect();
-    $stmt = $pdo->prepare('INSERT INTO demo (note) VALUES (:note)');
-    $stmt->execute(['note' => (string) $_POST['note']]);
-  } catch (\Throwable $e) {
-    // Ошибка подключения/записи — статус БД и так будет виден на странице ниже
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $title = trim((string) ($_POST['title'] ?? ''));
+
+  if ($title !== '') {
+    try {
+      BoardColumn::create(['title' => $title]);
+    } catch (\Throwable $e) {
+      // Пишем причину в лог: иначе слишком длинное или отклонённое значение
+      // теряется молча, а страница показывает только общий статус БД
+      $logger->error('insert failed', ['exception' => $e->getMessage()]);
+    }
   }
-  header('Location: /');
+
+  header('Location: /', true, 302);
+  $logRequest(302, '');
   exit;
 }
+
+ob_start();
 
 $phpVersion = PHP_VERSION;
 $hasPdoPgsql = extension_loaded('pdo_pgsql');
@@ -26,12 +50,11 @@ $hostname = gethostname();
 
 $dbVersion = null;
 $dbError = null;
-$rows = [];
+$rows = new Collection();
 
 try {
-  $pdo = Database::connect();
-  $dbVersion = (string) $pdo->query('SELECT version()')->fetchColumn();
-  $rows = $pdo->query('SELECT id, created_at, note FROM demo ORDER BY id DESC')->fetchAll();
+  $dbVersion = (string) Database::connection()->selectOne('SELECT version()')->version;
+  $rows = BoardColumn::query()->orderByDesc('id')->get();
 } catch (\Throwable $e) {
   $dbError = $e->getMessage();
 }
@@ -155,19 +178,19 @@ function h(string $value): string
     </dd>
   </dl>
 
-  <h2>Таблица demo</h2>
-  <?php if ($rows): ?>
+  <h2>Колонки</h2>
+  <?php if ($rows->isNotEmpty()): ?>
     <table>
       <tr>
         <th>id</th>
         <th>создано</th>
-        <th>note</th>
+        <th>название</th>
       </tr>
       <?php foreach ($rows as $row): ?>
         <tr>
-          <td><?= h((string) $row['id']) ?></td>
-          <td><?= h((string) $row['created_at']) ?></td>
-          <td><?= h((string) $row['note']) ?></td>
+          <td><?= h((string) $row->id) ?></td>
+          <td><?= h((string) $row->created_at) ?></td>
+          <td><?= h((string) $row->title) ?></td>
         </tr>
       <?php endforeach; ?>
     </table>
@@ -176,9 +199,16 @@ function h(string $value): string
   <?php endif; ?>
 
   <form method="post" action="/">
-    <input type="text" name="note" placeholder="Новая запись" required maxlength="500">
+    <input type="text" name="title" placeholder="Новая колонка" required maxlength="255">
     <button type="submit">Добавить</button>
   </form>
 </body>
 
 </html>
+<?php
+
+$body = ob_get_clean();
+
+$logRequest(200, $body);
+
+echo $body;
