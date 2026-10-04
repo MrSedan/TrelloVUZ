@@ -15,7 +15,7 @@ $checks = [
 $httpStatus = 200;
 
 try {
-  Database::connect()->query('SELECT 1');
+  Database::connection()->select('SELECT 1');
 } catch (\Throwable $e) {
   $checks['database'] = 'fail';
   $httpStatus = 503;
