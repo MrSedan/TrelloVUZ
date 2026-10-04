@@ -64,7 +64,6 @@ services:
       # PGDATA по умолчанию указывает на подпапку внутри неё
       - pgdata:/var/lib/postgresql
       - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
     ports:
       # Публикуем на хост для подключения GUI-клиентом
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
