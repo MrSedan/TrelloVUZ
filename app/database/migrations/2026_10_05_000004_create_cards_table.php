@@ -17,7 +17,7 @@ return new class extends Migration {
       $table->smallInteger('sort_index');
       $table->string('title', 255);
       $table->text('content')->nullable();
-      $table->char('color', 6)->nullable();
+      $table->string('color', 6)->nullable();
       $table->boolean('is_archived')->default(false);
       $table->timestamp('created_datetime');
       $table->timestamp('updated_datetime')->nullable();

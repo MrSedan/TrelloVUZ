@@ -14,7 +14,7 @@ return new class extends Migration {
       $table->foreignId('board_id')->constrained('boards', 'board_id');
       $table->smallInteger('ordinal_position');
       $table->string('title', 255);
-      $table->char('color', 6)->nullable();
+      $table->string('color', 6)->nullable();
 
       $table->index('board_id', 'idx_board_id');
     });
