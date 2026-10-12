@@ -12,7 +12,7 @@
 | `docker/php/` | Dockerfile, `php.ini`, `www.conf` |
 | `docker/postgres/` | Dockerfile и `postgresql.conf` |
 | `app/public/index.php` | главная страница: список колонок, форма добавления |
-| `app/public/health.php` | проверка здоровья: php + БД (200/503) |
+| `app/public/health.php` | проверка доступности: php + БД (200/503) |
 | `app/src/Database.php` | подключение к БД через Eloquent Capsule |
 | `app/src/Log.php` | логгер Monolog: stdout + файл в `app/var/log/` |
 | `app/src/Config.php` | конфигурация: читает `APP_ENV`, отдаёт настройки и секреты |
@@ -24,8 +24,8 @@
 | `app/config/` | настройки по средам: `dev.php`, `prod.php`, `test.php` |
 | `app/database/migrations/` | миграции |
 | `app/bin/migrate.php` | запуск миграций (migrate / rollback) |
-| `app/bin/encrypt.php` | шифрование строки из аргументов |
-| `app/bin/decrypt.php` | расшифровка строки из аргументов |
+| `app/bin/encrypt.php` | шифрование строки |
+| `app/bin/decrypt.php` | расшифровка строки |
 | `Makefile` | короткие команды |
 | `.env.example` | образец настроек (порты, БД, UID/GID, `APP_ENV`, `APP_KEY`) |
 
