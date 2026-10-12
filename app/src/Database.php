@@ -6,6 +6,8 @@ namespace App;
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\ConnectionInterface;
+use App\Config;
+
 
 final class Database
 {
@@ -17,6 +19,9 @@ final class Database
       return self::$capsule;
     }
 
+    $config = new Config;
+    $dbPassword = $config->getDecrypted('db_secret', getenv('DB_PASSWORD')) ?: '';
+
     $capsule = new Capsule();
     $capsule->addConnection([
       'driver' => 'pgsql',
@@ -24,7 +29,7 @@ final class Database
       'port' => getenv('DB_PORT') ?: '5432',
       'database' => getenv('DB_NAME') ?: 'app',
       'username' => getenv('DB_USER') ?: 'app',
-      'password' => getenv('DB_PASSWORD') ?: '',
+      'password' => $dbPassword,
       'charset' => 'utf8',
       'prefix' => '',
       'schema' => 'public',
