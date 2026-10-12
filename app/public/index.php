@@ -54,7 +54,7 @@ $rows = new Collection();
 
 try {
   $dbVersion = (string) Database::connection()->selectOne('SELECT version()')->version;
-  $rows = BoardColumn::query()->orderByDesc('id')->get();
+  $rows = BoardColumn::query()->orderByDesc('column_id')->get();
 } catch (\Throwable $e) {
   $dbError = $e->getMessage();
 }

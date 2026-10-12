@@ -8,9 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 
 final class BoardColumn extends Model
 {
-  protected $table = 'columns';
+  protected $table = 'board_columns';
+
+  protected $primaryKey = 'column_id';
 
   public $timestamps = false;
 
-  protected $fillable = ['title'];
+  protected $fillable = ['board_id', 'ordinal_position', 'title', 'color'];
 }
