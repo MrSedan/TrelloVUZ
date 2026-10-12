@@ -38,6 +38,11 @@ final class Config
     $this->encrypter = $encrypter ?? new Encrypter(self::key());
   }
 
+  public function encrypter(): Encrypter
+  {
+    return $this->encrypter;
+  }
+
   public function get(string $key, mixed $default = null): mixed
   {
     return $this->items[$key] ?? $default;

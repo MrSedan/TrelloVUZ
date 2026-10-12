@@ -4,7 +4,7 @@ export
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help init build up down ps logs clean composer migrate migrate-rollback sh psql
+.PHONY: help init build up down ps logs clean composer migrate migrate-rollback encrypt decrypt sh psql
 
 help:
 	@echo "make init      — создать .env из .env.example (с UID/GID текущего пользователя)"
@@ -17,6 +17,8 @@ help:
 	@echo "make composer  — composer install внутри php-контейнера"
 	@echo "make migrate   — применить миграции БД"
 	@echo "make migrate-rollback — откатить последнюю миграцию"
+	@echo "make encrypt   — зашифровать строку (TEXT=...)"
+	@echo "make decrypt   — расшифровать строку (TEXT=...)"
 	@echo "make sh        — shell в php-контейнере"
 	@echo "make psql      — консоль psql к postgres"
 
@@ -61,6 +63,12 @@ migrate:
 
 migrate-rollback:
 	docker compose exec php php bin/migrate.php rollback
+
+encrypt:
+	docker compose exec php php bin/encrypt.php "$(TEXT)"
+
+decrypt:
+	docker compose exec php php bin/decrypt.php "$(TEXT)"
 
 sh:
 	docker compose exec php sh
