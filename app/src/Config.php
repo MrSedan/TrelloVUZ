@@ -50,7 +50,15 @@ final class Config
 
   public function getDecrypted(string $key, mixed $default = null): string
   {
-    $value = $this->get($key, $default);
+    if (!array_key_exists($key, $this->items)) {
+      if (!is_string($default)) {
+        throw new RuntimeException(sprintf('Config value "%s" is missing and the default is not a string.', $key));
+      }
+
+      return $default;
+    }
+
+    $value = $this->items[$key];
 
     if (!is_string($value)) {
       throw new RuntimeException(sprintf('Config value "%s" is not a string.', $key));

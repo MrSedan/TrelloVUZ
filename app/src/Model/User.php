@@ -17,4 +17,6 @@ final class User extends Model
   const UPDATED_AT = 'updated_datetime';
 
   protected $fillable = ['email', 'password_hash', 'name'];
+
+  protected $hidden = ['password_hash'];
 }
