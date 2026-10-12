@@ -6,7 +6,9 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use App\Database;
 use App\Log;
+use App\Model\Board;
 use App\Model\BoardColumn;
+use App\Model\User;
 use Illuminate\Support\Collection;
 
 Database::boot();
@@ -29,7 +31,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   if ($title !== '') {
     try {
-      BoardColumn::create(['title' => $title]);
+      // Колонка ссылается на доску, доска — на владельца.
+      // Берём или создаём владельца и доску, чтобы форма работала на чистой БД
+      $owner = User::firstOrCreate(
+        ['email' => 'demo@example.com'],
+        ['password_hash' => 'demo', 'name' => 'Demo User'],
+      );
+      $board = Board::firstOrCreate(
+        ['owner_user_id' => $owner->user_id, 'title' => 'Моя доска'],
+        ['is_public' => true],
+      );
+
+      // ordinal_position — smallint NOT NULL: ставим следующую позицию
+      $nextPosition = (int) BoardColumn::where('board_id', $board->board_id)->max('ordinal_position') + 1;
+      $color = trim((string) ($_POST['color'] ?? ''));
+
+      BoardColumn::create([
+        'board_id' => $board->board_id,
+        'ordinal_position' => $nextPosition,
+        'title' => $title,
+        'color' => $color === '' ? null : $color,
+      ]);
     } catch (\Throwable $e) {
       // Пишем причину в лог: иначе слишком длинное или отклонённое значение
       // теряется молча, а страница показывает только общий статус БД
@@ -183,14 +205,18 @@ function h(string $value): string
     <table>
       <tr>
         <th>id</th>
-        <th>создано</th>
+        <th>доска</th>
+        <th>позиция</th>
         <th>название</th>
+        <th>цвет</th>
       </tr>
       <?php foreach ($rows as $row): ?>
         <tr>
-          <td><?= h((string) $row->id) ?></td>
-          <td><?= h((string) $row->created_at) ?></td>
+          <td><?= h((string) $row->column_id) ?></td>
+          <td><?= h((string) $row->board_id) ?></td>
+          <td><?= h((string) $row->ordinal_position) ?></td>
           <td><?= h((string) $row->title) ?></td>
+          <td><?= h((string) $row->color) ?></td>
         </tr>
       <?php endforeach; ?>
     </table>
@@ -200,6 +226,7 @@ function h(string $value): string
 
   <form method="post" action="/">
     <input type="text" name="title" placeholder="Новая колонка" required maxlength="255">
+    <input type="text" name="color" placeholder="цвет (6 символов)" maxlength="6" style="flex: 0 0 12rem;">
     <button type="submit">Добавить</button>
   </form>
 </body>
