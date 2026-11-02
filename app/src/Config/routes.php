@@ -10,6 +10,7 @@ use App\Library\Framework\Routing\Router;
 $router = new Router();
 $router->add('GET', '/', [new FrontendController(), 'index']);
 $router->add('GET', '/index.php', [new FrontendController(), 'index']);
+$router->add('POST', '/note-created', [new FrontendController(), 'noteCreated']);
 $router->add('GET', '/health', [new HealthController(), 'index']);
 $router->add('GET', '/health.php', [new HealthController(), 'index']);
 $router->add('GET', '/demo/error.php', [new DemoController(), 'error']);

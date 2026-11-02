@@ -3,6 +3,7 @@ window.onload = ()=>{
   const counter = document.querySelector("#counter");
 
   button.addEventListener('click', ()=>{
+    fetch('/note-created', { method: 'POST' }).catch(console.error);
     button.classList.add('animated');
     counter.textContent = parseInt(counter.textContent,10)+1;
 
