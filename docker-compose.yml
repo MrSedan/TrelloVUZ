@@ -10,6 +10,7 @@ services:
       - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
       # Тот же код, что и в php, тем же путём — иначе SCRIPT_FILENAME не совпадёт
       - ./app:/var/www/html:ro
+      - ./docker/nginx/snippets:/etc/nginx/snippets:ro
     depends_on:
       php:
         condition: service_healthy
@@ -77,11 +78,14 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_EXPORTER_USER: ${POSTGRES_EXPORTER_USER:-postgres_exporter}
+      POSTGRES_EXPORTER_PASSWORD: ${POSTGRES_EXPORTER_PASSWORD:-exporter_dev_password}
     volumes:
       # В postgres 18 точка монтирования данных — /var/lib/postgresql (без /data),
       # PGDATA по умолчанию указывает на подпапку внутри неё
       - pgdata:/var/lib/postgresql
       - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro 
     ports:
       # Публикуем на хост для подключения GUI-клиентом
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"

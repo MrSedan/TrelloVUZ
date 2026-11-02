@@ -5,6 +5,8 @@
   "require": {
     "php": ">=8.5",
     "ext-pdo_pgsql": "*",
+    "ext-apcu": "*",
+    "promphp/prometheus_client_php": "^2.15",
     "illuminate/database": "^12.0",
     "illuminate/events": "^12.0",
     "illuminate/filesystem": "^12.0",

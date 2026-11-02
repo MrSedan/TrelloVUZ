@@ -21,6 +21,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && docker-php-ext-install -j"$(nproc)" zip \
   && rm -rf /var/lib/apt/lists/*
 
+RUN pecl install apcu-5.1.28 \
+  && docker-php-ext-enable apcu \
+  && rm -rf /tmp/pear
+
 # Composer берём готовым бинарником из официального образа —
 # без curl | sh и без лишнего слоя с исходниками composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -37,12 +41,12 @@ RUN groupmod -o -g "${GID}" www-data \
 RUN set -eux; \
   supercronic_arch="$(dpkg --print-architecture)"; \
   case "$supercronic_arch" in \
-    amd64) supercronic_sha1=1692066e350a88ff4d7d6474fe3c7a6c41ec5e89 ;; \
-    arm64) supercronic_sha1=9d4c2000493215a1898502b2fc2dada3e8ea8c7a ;; \
-    *) echo "Unsupported Supercronic architecture: $supercronic_arch" >&2; exit 1 ;; \
+  amd64) supercronic_sha1=1692066e350a88ff4d7d6474fe3c7a6c41ec5e89 ;; \
+  arm64) supercronic_sha1=9d4c2000493215a1898502b2fc2dada3e8ea8c7a ;; \
+  *) echo "Unsupported Supercronic architecture: $supercronic_arch" >&2; exit 1 ;; \
   esac; \
   curl -fsSL "https://github.com/aptible/supercronic/releases/download/v0.2.51/supercronic-linux-${supercronic_arch}" \
-    -o /usr/local/bin/supercronic; \
+  -o /usr/local/bin/supercronic; \
   echo "${supercronic_sha1}  /usr/local/bin/supercronic" | sha1sum -c -; \
   chmod +x /usr/local/bin/supercronic
 
