@@ -12,6 +12,9 @@ services:
       - ./docker/nginx/logging/access_log.conf:/etc/nginx/snippets/access_log.conf:ro 
   php:
     <<: *gelf-logging
+  cron:
+    <<: *gelf-logging
+    command: [ "supercronic", "-passthrough-logs", "/etc/cron.d/trello" ]
   postgres:
     <<: *gelf-logging
   grafana:
