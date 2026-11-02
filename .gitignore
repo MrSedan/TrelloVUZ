@@ -2,3 +2,4 @@
 app/vendor
 app/var
 docs
+.DS_Store
