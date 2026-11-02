@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App;
+namespace App\Library\Database;
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\ConnectionInterface;
-use App\Config;
+use App\Library\Super;
 
 
 final class Database
@@ -19,7 +19,7 @@ final class Database
       return self::$capsule;
     }
 
-    $config = new Config;
+    $config = Super::config();
     $dbPassword = $config->getDecrypted('db_secret', getenv('DB_PASSWORD')) ?: '';
 
     $capsule = new Capsule();

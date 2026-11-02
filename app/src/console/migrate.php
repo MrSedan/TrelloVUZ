@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../init.php';
 
-use App\Database;
+use App\Library\Database\Database;
 use Illuminate\Database\Migrations\DatabaseMigrationRepository;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Filesystem\Filesystem;
@@ -26,7 +26,7 @@ if (!$repository->repositoryExists()) {
 
 $migrator = new Migrator($repository, $manager, new Filesystem());
 
-$paths = [__DIR__ . '/../database/migrations'];
+$paths = [__DIR__ . '/../migrations'];
 $action = $argv[1] ?? 'migrate';
 
 if ($action === 'rollback') {

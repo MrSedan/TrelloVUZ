@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../src/init.php';
 
-use App\Database;
-use App\Log;
-use App\Model\Board;
-use App\Model\BoardColumn;
-use App\Model\User;
+use App\Library\Database\Database;
+use App\Library\Database\Board;
+use App\Library\Database\BoardColumn;
+use App\Library\Database\User;
+use App\Library\Super;
 use Illuminate\Support\Collection;
 
 Database::boot();
-$logger = Log::logger();
+$logger = Super::log();
 
 // Логируем каждый входящий запрос: метод, URI, статус и тело ответа
 $logRequest = static function (int $status, string $body) use ($logger): void {

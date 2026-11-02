@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App;
+namespace App\Library\Framework;
 
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Logger;
 
-final class Log
+final class LogHelper
 {
   private static ?Logger $logger = null;
 
@@ -19,7 +19,7 @@ final class Log
       return self::$logger;
     }
 
-    $dir = __DIR__ . '/../var/log';
+    $dir = __DIR__ . '/../../../var/log';
     if (!is_dir($dir)) {
       mkdir($dir, 0775, true);
     }

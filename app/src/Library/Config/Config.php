@@ -2,15 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App;
-
-use App\Security\Encrypter;
+namespace App\Library\Config;
 use RuntimeException;
 
 /**
  * Конфигурация приложения для выбранного окружения.
  *
- * Окружение берётся из APP_ENV, файл конфигурации — app/config/<env>.php.
+ * Окружение берётся из APP_ENV, файл конфигурации — app/src/Config/<env>.php.
  * Encrypter создаётся из APP_KEY (base64) и используется методом getDecrypted().
  */
 final class Config
@@ -22,7 +20,7 @@ final class Config
   public function __construct(?Encrypter $encrypter = null)
   {
     $env = getenv('APP_ENV') ?: 'dev';
-    $path = __DIR__ . '/../config/' . $env . '.php';
+    $path = __DIR__ . '/../../Config/' . $env . '.php';
 
     if (!is_file($path)) {
       throw new RuntimeException(sprintf('Config file not found for environment "%s".', $env));

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Security;
+namespace App\Library\Config;
 
 use InvalidArgumentException;
 use RuntimeException;

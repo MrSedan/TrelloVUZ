@@ -2,49 +2,33 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../src/init.php';
 
-use App\Log;
+use App\Library\Api\Request;
+use App\Library\Framework\Routing\Response;
+use App\Library\Super;
 
+$logger = Super::log();
+$request = Request::fromGlobals();
 
-$logger = Log::logger();
+try {
+  $router = require ROOT_DIR . '/Config/routes.php';
+  $response = $router->dispatch($request);
+
+  if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+  }
+} catch (Throwable $e) {
+  $logger->error('request failed', ['exception' => $e->getMessage()]);
+  $response = new Response('Internal Server Error', 500, ['Content-Type' => 'text/plain; charset=utf-8']);
+}
 
 // Логируем каждый входящий запрос: метод, URI, статус и тело ответа
-$logRequest = static function (int $status, string $body) use ($logger): void {
-  $logger->info('request', [
-    'method' => $_SERVER['REQUEST_METHOD'] ?? '',
-    'uri' => $_SERVER['REQUEST_URI'] ?? '',
-    'status' => $status,
-    'body' => $body,
-  ]);
-};
+$logger->info('request', [
+  'method' => $_SERVER['REQUEST_METHOD'] ?? '',
+  'uri' => $_SERVER['REQUEST_URI'] ?? '',
+  'status' => $response->status,
+  'body' => $response->body,
+]);
 
-ob_start();
-?>
-<!DOCTYPE html>
-<html lang="ru">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Index page</title>
-  <link rel='stylesheet' href="/assets/index.css" />
-  <script src='/assets/index.js'></script>
-</head>
-
-<body>
-  <main>
-    <h1>Counter: <span id='counter'>0</span></h1>
-
-    <button class='btn'>Click</button>
-  </main>
-</body>
-
-</html>
-<?php
-
-$body = ob_get_clean();
-
-$logRequest(200, $body);
-
-echo $body;
+$response->send($request->method === 'HEAD');
