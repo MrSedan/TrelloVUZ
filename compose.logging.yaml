@@ -1,0 +1,103 @@
+x-gelf-logging: &gelf-logging
+  logging:
+    driver: gelf 
+    options:
+      gelf-address: udp://graylog.devops-course.orb.local:12201
+      tag: "{{.Name}}"
+
+services:
+  nginx:
+    <<: *gelf-logging
+    volumes:
+      - ./docker/nginx/logging/access_log.conf:/etc/nginx/snippets/access_log.conf:ro 
+  php:
+    <<: *gelf-logging
+  postgres:
+    <<: *gelf-logging
+  grafana:
+    volumes:
+      - ./docker/grafana/logging/graylog-opensearch.yml:/etc/grafana/provisioning/datasources/graylog-opensearch.yml:ro 
+  mongodb:
+    image: mongo:8.0.34
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  opensearch:
+    image: opensearchproject/opensearch:3.7.0
+    environment:
+      discovery.type: single-node
+      action.auto_create_index: "false"
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      node.store.allow_mmap: "false"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS 'http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=2s' >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
+  
+  graylog:
+    image: graylog/graylog:7.2.1
+    environment:
+      GRAYLOG_PASSWORD_SECRET: ${GRAYLOG_PASSWORD_SECRET:-devops-course-dev-secret-0123456789}
+      GRAYLOG_ROOT_PASSWORD_SHA2: ${GRAYLOG_ROOT_PASSWORD_SHA2:-8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918}
+      GRAYLOG_HTTP_BIND_ADDRESS: 0.0.0.0:9000
+      GRAYLOG_HTTP_EXTERNAL_URI: http://127.0.0.1:${GRAYLOG_PORT:-9000}/
+      GRAYLOG_ELASTICSEARCH_HOSTS: http://opensearch:9200
+      GRAYLOG_MONGODB_URI: mongodb://mongodb:27017/graylog
+      GRAYLOG_ROTATION_STRATEGY: time
+      GRAYLOG_ELASTICSEARCH_MAX_TIME_PER_INDEX: 1d
+      GRAYLOG_ELASTICSEARCH_MAX_NUMBER_OF_INDICES: "7"
+      GRAYLOG_SERVER_JAVA_OPTS: -Xms1g -Xmx1g
+      GRAYLOG_ALLOW_LEADING_WILDCARD_SEARCHES: "true"
+      GRAYLOG_VERSIONCHECKS: "false"
+      GRAYLOG_TELEMETRY_ENABLED: "false"
+    volumes:
+      - graylog-data:/usr/share/graylog/data
+    ports:
+      - "127.0.0.1:${GRAYLOG_PORT:-9000}:9000"
+      - "127.0.0.1:${GRAYLOG_GELF_PORT:-12201}:12201/udp"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/api/system/lbstatus >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    restart: unless-stopped
+
+  graylog-init:
+    image: python:3.14.8-alpine3.24
+    command: ["python", "/init/init.py"]
+    environment:
+      GRAYLOG_API: http://graylog:9000/api
+      GRAYLOG_USER: admin
+      GRAYLOG_PASSWORD: ${GRAYLOG_ROOT_PASSWORD:-admin}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./docker/graylog:/init:ro
+    depends_on:
+      graylog:
+        condition: service_healthy
+    restart: on-failure:5
+
+volumes:
+  mongodb-data:
+  opensearch-data:
+  graylog-data:

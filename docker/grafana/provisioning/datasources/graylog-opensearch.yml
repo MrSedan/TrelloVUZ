@@ -1,0 +1,5 @@
+deleteDatasources:
+  - name: Graylog (OpenSearch)
+    orgId: 1
+
+datasources: []
