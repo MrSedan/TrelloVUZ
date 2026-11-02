@@ -7,7 +7,7 @@
 
 | Путь | Что это |
 |------|---------|
-| `docker-compose.yml` | три сервиса: nginx, php, postgres |
+| `docker-compose.yml` | четыре сервиса: nginx, php, cron, postgres |
 | `docker/nginx/` | конфиг nginx |
 | `docker/php/` | Dockerfile, `php.ini`, `www.conf` |
 | `docker/postgres/` | Dockerfile и `postgresql.conf` |
@@ -23,7 +23,7 @@
 | `app/src/Library/Tasks/RemoveOldSessionsCronTask.php` | очистка просроченных сессий |
 | `app/src/Config/cron.php` | реестр крон-задач |
 | `app/src/crontab.php` | CLI для запуска крон-задач |
-| `docker/cron/crontab.example` | пример расписания для crontab хоста |
+| `docker/cron/crontab` | расписание задач контейнера cron |
 | `app/src/Library/Database/Database.php` | подключение к БД через Eloquent Capsule |
 | `app/src/Library/Framework/LogHelper.php` | логгер Monolog: stdout + файл в `app/var/log/` |
 | `app/src/Library/Super.php` | общий доступ к конфигурации и логгеру |
@@ -91,7 +91,6 @@ make decrypt TEXT="<шифротекст>"
 запросах одной сессии. После работы с `$_SESSION` можно вызвать
 `session_write_close()`, чтобы освободить блокировку до завершения долгого запроса.
 
-
 ## Крон-задачи
 
 ```bash
@@ -101,17 +100,39 @@ make cron TASK=sessions:gc
 
 Задачи регистрируются в `app/src/Config/cron.php`: имя сопоставляется с объектом
 класса, который наследует `App\Library\Framework\CronTaskAbstract` и реализует
-`run(): void`. `sessions:gc` удаляет просроченные сессии.
+`run(): void`.
+`sessions:gc` удаляет просроченные сессии. Автоматическая очистка при HTTP-запросах
+отключена: регулярный запуск выполняет отдельный контейнер `cron`.
 
-Расписание задаёт системный cron на хосте. Откройте `crontab -e` от пользователя,
-у которого есть доступ к Docker, и добавьте содержимое
-`docker/cron/crontab.example`, заменив `/absolute/path/to/trello` на путь проекта.
-Пример запускает очистку каждые пять минут. Контейнеры должны быть запущены,
-зависимости установлены, миграции применены. Автоматическая очистка при
-HTTP-запросах отключена; файл-пример сам по себе расписание не устанавливает.
+Контейнер использует тот же PHP-образ, код и настройки БД, что и сервис `php`.
+Планировщик Supercronic работает от `www-data` и запускает очистку каждые пять
+минут. Расписание хранится в `docker/cron/crontab`, часовой пояс — Europe/Moscow,
+как в `php.ini`. Системный crontab на хосте не нужен.
+
+После обновления образа выполните:
+
+```bash
+make build
+make up
+docker compose logs -f cron
+```
+
+Перед выполнением задач должны быть установлены зависимости и применены миграции
+(`make composer`, `make migrate`). На первом запуске выполните эти команды после
+`make up`. До этого планировщик будет писать ошибки задач и повторять запуск
+по расписанию.
 
 Чтобы добавить задачу, создайте класс в `app/src/Library/Tasks/`, зарегистрируйте
-его в `app/src/Config/cron.php` и добавьте вызов `src/crontab.php <имя>` в crontab.
+его в `app/src/Config/cron.php` и добавьте команду
+`php /var/www/html/src/crontab.php <имя>` с расписанием в
+`docker/cron/crontab`. После изменения расписания пересоздайте контейнер:
+
+```bash
+docker compose up -d --force-recreate cron
+```
+
+Если ранее добавили задачу в crontab хоста, удалите ту запись через `crontab -e`,
+чтобы оставить один источник расписания.
 
 Одновременный запуск той же задачи пропускается благодаря блокировке PostgreSQL.
 Успешный или пропущенный запуск возвращает код 0, ошибка задачи — 1,

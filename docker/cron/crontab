@@ -1,0 +1,2 @@
+# Очистка просроченных сессий каждые пять минут.
+*/5 * * * * php /var/www/html/src/crontab.php sessions:gc

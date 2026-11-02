@@ -1,3 +1,0 @@
-# Пользовательский crontab на хосте. Замените путь к проекту перед установкой.
-PATH=/usr/local/bin:/usr/bin:/bin
-*/5 * * * * cd /absolute/path/to/trello && docker compose exec -T -u www-data php php src/crontab.php sessions:gc
