@@ -19,4 +19,17 @@ abstract class ControllerAbstract
       ['Content-Type' => 'application/json; charset=utf-8'],
     );
   }
+
+  protected function run(ActionAbstract $action): Response
+  {
+    return $action->execute($this->input())->toResponse();
+  }
+
+  /** Тело запроса: JSON, если пришёл JSON-объект, иначе $_POST. */
+  private function input(): array
+  {
+    $json = json_decode((string) file_get_contents('php://input'), true);
+
+    return is_array($json) ? $json : $_POST;
+  }
 }
