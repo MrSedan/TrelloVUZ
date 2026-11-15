@@ -11,6 +11,7 @@ $router = new Router();
 $router->add('GET', '/', [new FrontendController(), 'index']);
 $router->add('GET', '/index.php', [new FrontendController(), 'index']);
 $router->add('POST', '/note-created', [new FrontendController(), 'noteCreated']);
+$router->add('GET', '/auth', [new FrontendController(), 'auth']);
 $router->add('POST', '/register', [new FrontendController(), 'register']);
 $router->add('POST', '/login', [new FrontendController(), 'login']);
 $router->add('POST', '/logout', [new FrontendController(), 'logout']);

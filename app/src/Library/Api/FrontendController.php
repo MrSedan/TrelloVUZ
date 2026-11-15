@@ -7,7 +7,9 @@ namespace App\Library\Api;
 use App\Library\Api\Action\LoginAction;
 use App\Library\Api\Action\LogoutAction;
 use App\Library\Api\Action\RegisterAction;
+use App\Library\Api\View\AuthView;
 use App\Library\Api\View\HomeView;
+use App\Library\Auth\Auth;
 use App\Library\Auth\Session;
 use App\Library\Framework\Metrics;
 use App\Library\Framework\Routing\ControllerAbstract;
@@ -20,6 +22,11 @@ final class FrontendController extends ControllerAbstract
     Session::start();
 
     return $this->render(new HomeView());
+  }
+
+  public function auth(): Response
+  {
+    return $this->render(new AuthView(), ['user' => Auth::user()]);
   }
 
   public function noteCreated(): Response
