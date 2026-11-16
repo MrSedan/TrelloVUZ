@@ -6,6 +6,7 @@ namespace App\Library\Api\Action;
 
 use App\Library\Api\Response\UserResponse;
 use App\Library\Auth\Auth;
+use App\Library\Framework\Metrics;
 use App\Library\Framework\Routing\ActionAbstract;
 use App\Library\Framework\Routing\ErrorResponse;
 use App\Library\Framework\Routing\ResponseModel;
@@ -29,6 +30,12 @@ final class RegisterAction extends ActionAbstract
   {
     $user = Auth::register($input['email'], $input['password'], trim($input['name']));
 
-    return $user === null ? new ErrorResponse('email already registered', 409) : new UserResponse($user, 201);
+    if ($user === null) {
+      return new ErrorResponse('email already registered', 409);
+    }
+
+    Metrics::userRegistered();
+
+    return new UserResponse($user, 201);
   }
 }

@@ -8,6 +8,9 @@ use App\Library\Api\Request;
 use App\Library\Framework\Routing\Response;
 use App\Library\Super;
 
+// Тела ответов этих маршрутов содержат email и имя пользователя — в лог их не пишем.
+const REDACTED_BODY_PATHS = ['/register', '/login', '/auth'];
+
 $logger = Super::log();
 $request = Request::fromGlobals();
 
@@ -28,7 +31,7 @@ $logger->info('request', [
   'method' => $_SERVER['REQUEST_METHOD'] ?? '',
   'uri' => $_SERVER['REQUEST_URI'] ?? '',
   'status' => $response->status,
-  'body' => $response->body,
+  'body' => in_array($request->path(), REDACTED_BODY_PATHS, true) ? '[redacted]' : $response->body,
 ]);
 
 $response->send($request->method === 'HEAD');

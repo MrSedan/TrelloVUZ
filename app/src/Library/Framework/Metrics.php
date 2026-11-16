@@ -46,6 +46,34 @@ final class Metrics
     });
   }
 
+  public static function userRegistered(): void
+  {
+    self::safely(static function (): void {
+      self::registry()
+        ->getOrRegisterCounter('app', 'users_registered_total', 'Количество зарегистрированных пользователей')
+        ->inc();
+    });
+  }
+
+  /** Метка result (success|failed) позволяет заметить подбор паролей: рост failed при обычном success. */
+  public static function login(bool $success): void
+  {
+    self::safely(static function () use ($success): void {
+      self::registry()
+        ->getOrRegisterCounter('app', 'logins_total', 'Количество попыток входа', ['result'])
+        ->inc([$success ? 'success' : 'failed']);
+    });
+  }
+
+  public static function logout(): void
+  {
+    self::safely(static function (): void {
+      self::registry()
+        ->getOrRegisterCounter('app', 'logouts_total', 'Количество выходов из аккаунта')
+        ->inc();
+    });
+  }
+
   public static function safely(callable $fn): void
   {
     if (!self::enabled()) {

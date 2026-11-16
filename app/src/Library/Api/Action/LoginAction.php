@@ -6,6 +6,7 @@ namespace App\Library\Api\Action;
 
 use App\Library\Api\Response\UserResponse;
 use App\Library\Auth\Auth;
+use App\Library\Framework\Metrics;
 use App\Library\Framework\Routing\ActionAbstract;
 use App\Library\Framework\Routing\ErrorResponse;
 use App\Library\Framework\Routing\ResponseModel;
@@ -25,6 +26,8 @@ final class LoginAction extends ActionAbstract
   protected function handle(array $input): ResponseModel
   {
     $user = Auth::login((string) $input['email'], (string) $input['password']);
+
+    Metrics::login($user !== null);
 
     return $user === null ? new ErrorResponse('invalid email or password', 401) : new UserResponse($user);
   }
