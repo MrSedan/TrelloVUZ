@@ -7,7 +7,7 @@ endif
 .PHONY: help init build up down ps logs clean composer migrate migrate-rollback encrypt decrypt cron cron-list sh psql \
 	mon-up mon-down mon-ps mon-check mon-reload pg-monitoring \
 	logs-up logs-down \ 
-	demo-db-down demo-db-up demo-load demo-errors demo-slow
+	demo-db-down demo-db-up demo-load demo-errors demo-slow demo-logins
 
 COMPOSE = docker compose
 COMPOSE_MON = docker compose -f docker-compose.yml -f compose.monitoring.yaml
@@ -52,6 +52,7 @@ help:
 	@echo "make demo-load    — нагрузка k6 сверх пула php-fpm: очередь, p99, PhpFpmPoolSaturated (~5 мин)"
 	@echo "make demo-errors  — всплеск ошибок (без алерта), затем поток 5xx: HighErrorRate (~6 мин)"
 	@echo "make demo-slow    — медленные запросы к БД: latency, slow-log, pg_stat_statements (~4 мин)"
+	@echo "make demo-logins  — подбор пароля: поток неудачных входов, LoginFailuresHigh (~4 мин)"
 
 init:
 	@if [ -f .env ]; then \
@@ -187,6 +188,12 @@ demo-errors:
 	@echo "Смотреть: $(PROMETHEUS_URL)/alerts — HighErrorRate после всплеска только pending, писем нет;"
 	@echo "на устойчивых ошибках через ~2.5 мин firing и письмо в $(MAILPIT_URL)."
 	$(K6) /scripts/errors.js
+
+demo-logins:
+	@echo "4 мин: 1 успешный вход/с на фоне 3 неудачных/с (подбор пароля)."
+	@echo "Смотреть: $(GRAFANA_URL) — «Входы неудачные», «Регистрации и входы в минуту»;"
+	@echo "$(PROMETHEUS_URL)/alerts — LoginFailuresHigh: pending, через ~2.5 мин firing и письмо в $(MAILPIT_URL)."
+	$(K6) /scripts/logins.js
 
 demo-slow:
 	@echo "4 мин медленных запросов (pg_sleep 1.5 с). Смотреть: $(GRAFANA_URL) — p95 по route,"
