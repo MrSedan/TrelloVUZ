@@ -84,6 +84,19 @@ groups:
           description: "Все воркеры php-fpm (pm.max_children) заняты, запросы ждут в очереди. Значение: {{ $value }}."
           runbook_url: "https://github.com/MrSedan/TrelloVUZ/blob/main/docs/runbooks/PhpFpmPoolSaturated.md"
 
+      # Бизнес-алерт на безопасность: много неудачных входов — подбор паролей
+      # или сломанная форма входа. Порог 0.2/с (12 в минуту) — для учебного
+      # трафика это уже аномалия; for: 2m отсекает разовые опечатки в пароле.
+      - alert: LoginFailuresHigh
+        expr: sum(rate(app_logins_total{result="failed"}[1m])) > 0.2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Много неудачных входов — {{ $value | humanize }}/с"
+          description: "Неудачных попыток входа больше 0.2 в секунду уже 2 минуты (сейчас {{ $value | humanize }}/с). Возможен подбор паролей или сломана форма входа."
+          runbook_url: "https://github.com/MrSedan/TrelloVUZ/blob/main/docs/runbooks/LoginFailuresHigh.md"
+
   - name: postgres
     rules:
       # pg_up, а не up: если упадёт БД, экспортер останется жив (up == 1),

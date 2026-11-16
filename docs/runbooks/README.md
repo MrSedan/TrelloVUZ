@@ -14,5 +14,6 @@
 | [HighErrorRate](HighErrorRate.md) | critical |
 | [HighLatencyP95](HighLatencyP95.md) | warning |
 | [PhpFpmPoolSaturated](PhpFpmPoolSaturated.md) | warning |
+| [LoginFailuresHigh](LoginFailuresHigh.md) | warning |
 | [PostgresDown](PostgresDown.md) | critical |
 | [PostgresTooManyConnections](PostgresTooManyConnections.md) | warning |
