@@ -2,3 +2,5 @@
 app/vendor
 app/var
 .DS_Store
+node_modules
+app/public/dist
