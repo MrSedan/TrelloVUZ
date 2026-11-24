@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
 import { LoginPage } from '../pages/login'
 import { MainPage } from '../pages/main'
 import { NotFoundPage } from '../pages/not-found'
@@ -17,6 +17,8 @@ export function App() {
             <Route index element={<MainPage />} />
           </Route>
 
+          <Route path="index.php" element={<Navigate to="/" replace />} />
+          <Route path="auth" element={<LoginPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="*" element={<NotFoundPage />} />

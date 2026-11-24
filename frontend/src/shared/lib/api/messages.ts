@@ -1,7 +1,7 @@
 import type { ApiError } from './ApiError'
 
 /**
- * Маппинг кодов ошибок валидации на человекочитаемые сообщения.
+ * Маппинг кодов и сообщений валидации на человекочитаемые сообщения.
  * Коды ошибок берём из бэкенда.
  */
 const parameterMessages: Record<string, string> = {
@@ -22,27 +22,37 @@ const parameterMessages: Record<string, string> = {
   max_length: 'Слишком длинное значение',
   min_date: 'Дата слишком ранняя',
   max_date: 'Дата слишком поздняя',
+  'is required': 'Обязательное поле',
+  'must be a valid email': 'Некорректный email',
+}
+
+function formatParameterError(message: string): string {
+  if (message.startsWith('must be at least ')) {
+    message = 'min_length'
+  } else if (message.startsWith('must be at most ')) {
+    message = 'max_length'
+  }
+
+  return parameterMessages[message] ?? 'Проверьте значение'
 }
 
 /**
- * parameter_errors: { email: ['required', 'invalid_email'] } -> { email: 'Обязательное поле. Некорректный email' }
+ * { email: ['required', 'invalid_email'] } -> { email: 'Обязательное поле. Некорректный email' }
  */
 export function formatParameterErrors(
   parameterErrors: Record<string, string[]>,
 ): Record<string, string> {
   const formatted: Record<string, string> = {}
 
-  for (const [field, codes] of Object.entries(parameterErrors)) {
-    formatted[field] = codes
-      .map((code) => parameterMessages[code] ?? 'Проверьте значение')
-      .join('. ')
+  for (const [field, messages] of Object.entries(parameterErrors)) {
+    formatted[field] = messages.map(formatParameterError).join('. ')
   }
 
   return formatted
 }
 
 /**
- * Логические ошибки бэкенда (RequestApiException) -> текст для баннера.
+ * Логические ошибки бэкенда -> текст для баннера.
  */
 const requestMessages: Record<string, string> = {
   'User already exists': 'Пользователь с таким email уже зарегистрирован',
@@ -51,6 +61,8 @@ const requestMessages: Record<string, string> = {
   'Authorized user': 'Вы уже авторизованы',
   'Can`t authorize new user': 'Не удалось войти под новым пользователем',
   'User not found': 'Пользователь не найден',
+  'email already registered': 'Пользователь с таким email уже зарегистрирован',
+  'invalid email or password': 'Неверный email или пароль',
 }
 
 export function formatRequestError(error: ApiError): string {

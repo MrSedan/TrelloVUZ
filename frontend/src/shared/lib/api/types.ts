@@ -2,22 +2,18 @@
  * Общий формат любого ответа от бэкенда
  */
 export type ApiEnvelope = {
-  is_successful: boolean
-  time: string
+  status: 'ok' | 'fail'
 }
 
 /**
- * Неуспешный ответ: HTTP 4xx/5xx, is_successful = false.
+ * Неуспешный ответ: HTTP 4xx/5xx, status = 'fail'.
  */
 export type ApiFailure = ApiEnvelope & {
-  is_successful: false
+  status: 'fail'
   /** Общий текст ошибки от бэкенда (на английском — переводим в messages.ts). */
   error: string
-  /** Ошибки валидации по полям: { email: ['required', 'invalid_email'] }. */
-  parameter_errors?: Record<string, string[]>
+  /** Ошибки валидации по полям: { email: ['is required'] }. */
+  errors?: Record<string, string[]>
 }
 
-/**
- * Успешный ответ: поля модели лежат «плоско» рядом с другими полями.
- */
-export type ApiSuccess<T> = ApiEnvelope & { is_successful: true } & T
+export type ApiSuccess<T> = ApiEnvelope & { status: 'ok' } & T

@@ -8,7 +8,7 @@ type InputProps = {
   type?: 'text' | 'email' | 'password'
   placeholder?: string
   autoComplete?: string
-  /** Текст ошибки под полем — сюда попадают parameter_errors с бэкенда. */
+  /** Текст ошибки под полем — сюда попадают ошибки валидации с бэкенда. */
   error?: string
 }
 

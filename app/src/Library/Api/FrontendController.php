@@ -7,26 +7,36 @@ namespace App\Library\Api;
 use App\Library\Api\Action\LoginAction;
 use App\Library\Api\Action\LogoutAction;
 use App\Library\Api\Action\RegisterAction;
-use App\Library\Api\View\AuthView;
-use App\Library\Api\View\HomeView;
+use App\Library\Api\Response\UserResponse;
 use App\Library\Auth\Auth;
-use App\Library\Auth\Session;
 use App\Library\Framework\Metrics;
 use App\Library\Framework\Routing\ControllerAbstract;
+use App\Library\Framework\Routing\ErrorResponse;
 use App\Library\Framework\Routing\Response;
 
 final class FrontendController extends ControllerAbstract
 {
   public function index(): Response
   {
-    Session::start();
+    $index = ROOT_DIR . '/../public/dist/index.html';
+    if (!is_file($index)) {
+      return new Response('Frontend is not built', 503, ['Content-Type' => 'text/plain; charset=utf-8']);
+    }
 
-    return $this->render(new HomeView());
+    return new Response(file_get_contents($index));
   }
 
   public function auth(): Response
   {
-    return $this->render(new AuthView(), ['user' => Auth::user()]);
+    if (($_SERVER['HTTP_ACCEPT'] ?? '') === 'application/json') {
+      $user = Auth::user();
+      $response = ($user === null ? new ErrorResponse('User not found', 401) : new UserResponse($user))
+        ->toResponse();
+    } else {
+      $response = $this->index();
+    }
+
+    return new Response($response->body, $response->status, $response->headers + ['Vary' => 'Accept']);
   }
 
   public function noteCreated(): Response

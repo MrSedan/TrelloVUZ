@@ -1,11 +1,6 @@
-/**
- * Пользователь приложения — в том виде, в каком его отдаёт бэкенд
- * (см. UserResponseModel в app/src/Library/Api/Responses).
- */
+/** Пользователь из UserResponse. */
 export type User = {
-  user_id: number
+  id: number
   email: string
   name: string
-  created_datetime: string
-  updated_datetime: string | null
 }
