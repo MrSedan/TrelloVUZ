@@ -1,7 +1,7 @@
 # VyatSU Trello Project
 
-Учебный аналог Trello: nginx + php-fpm + PostgreSQL в Docker.
-Код на чистом PHP, ORM — Eloquent (illuminate/database), логи — Monolog.
+Учебный аналог Trello: React, nginx, php-fpm и PostgreSQL.
+Бэкенд на PHP, ORM — Eloquent (illuminate/database), логи — Monolog.
 
 ## Что где лежит
 
@@ -15,8 +15,9 @@
 | `app/public/health.php` | совместимый адрес проверки php + БД (200/503) |
 | `app/src/init.php` | общая инициализация и обработка ошибок HTTP и CLI |
 | `app/src/Config/routes.php` | маршруты HTTP: метод, путь и метод контроллера |
-| `app/src/Library/Api/` | контроллеры, HTTP-запрос и представления приложения |
-| `app/src/Library/Framework/Routing/` | базовые Request, Controller, View, маршрутизатор и HTTP-ответ |
+| `frontend/` | React-приложение, сборка в `app/public/dist/` |
+| `app/src/Library/Api/` | контроллеры и HTTP-запрос приложения |
+| `app/src/Library/Framework/Routing/` | базовые Request, Controller, маршрутизатор и HTTP-ответ |
 | `app/src/Library/Auth/` | сессии PHP с хранением в PostgreSQL |
 | `app/src/Library/Framework/TaskRunner.php` | запуск именованных задач с блокировкой в PostgreSQL |
 | `app/src/Library/Framework/CronTaskAbstract.php` | базовый класс крон-задачи |
@@ -49,9 +50,16 @@ make build     # собрать образы
 make up        # поднять контейнеры
 make composer  # установить PHP-зависимости (composer install)
 make migrate   # применить миграции
+npm --prefix frontend ci
+npm --prefix frontend run build
 ```
 
 Сайт: <http://localhost:8080>
+
+Для разработки запустите `npm --prefix frontend run dev` и откройте
+<http://localhost:5173>. React обращается к PHP на порту 8080 того же хоста.
+Другой адрес API можно задать через `VITE_API_URL` в `frontend/.env.local`.
+Адрес может включать префикс пути, например `http://localhost:8080/api`.
 
 ## Конфигурация
 
@@ -79,7 +87,7 @@ make decrypt TEXT="<шифротекст>"
 ## Сессии
 
 После обновления выполните `make migrate`: обработчик использует таблицу `sessions`.
-Главная страница запускает сессию через `App\Library\Auth\Session::start()`.
+React проверяет сессию запросом `GET /auth` с заголовком `Accept: application/json`.
 В контроллерах после запуска доступны обычные `$_SESSION`, `session_regenerate_id(true)`
 и `session_destroy()`. Проверка доступности сессию не запускает.
 
@@ -141,21 +149,21 @@ docker compose up -d --force-recreate cron
 ## Контроллеры и маршруты
 
 `App\Library\Framework\Routing\ControllerAbstract` — базовый класс с методами
-`render()` и `json()`. Действие контроллера возвращает
-`App\Library\Framework\Routing\Response`. Представления наследуют `ViewAbstract`
-и указывают PHP-шаблон в методе `template()`. Например, `render(new HomeView())`
-загружает `app/src/Library/Api/View/home.php`.
+`run()` и `json()`. Действие контроллера возвращает
+`App\Library\Framework\Routing\Response`.
 
 Маршруты регистрируются явно в `app/src/Config/routes.php`, например:
 
 ```php
-$router->add('GET', '/', [new FrontendController(), 'index']);
+$router->add('GET', '/', [$frontend, 'index']);
 ```
 
 Маршрутизатор сопоставляет точный путь без query string и HTTP-метод.
 Неизвестный путь возвращает 404, неподдерживаемый метод — 405 с заголовком Allow.
-HEAD использует GET без тела ответа. Доступны `/`, `/index.php`, `/health` и
-`/health.php`. Статические файлы по-прежнему отдаёт nginx.
+HEAD использует GET без тела ответа. По адресам `/`, `/index.php`, `/auth`,
+`/login` и `/register` браузер получает React-приложение. Формы отправляют
+POST-запросы на `/login`, `/register` и `/logout`. nginx отдаёт статические файлы
+из `/dist/`. Проверки доступности работают по адресам `/health` и `/health.php`.
 
 `App\Library\Api\Request` наследует `RequestAbstract` и получает метод и URI из
 `$_SERVER`. Маршрутизатор принимает объект запроса. Общий `app/src/init.php`

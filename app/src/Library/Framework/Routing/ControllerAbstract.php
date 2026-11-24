@@ -6,11 +6,6 @@ namespace App\Library\Framework\Routing;
 
 abstract class ControllerAbstract
 {
-  protected function render(ViewAbstract $view, array $data = []): Response
-  {
-    return $view->render($data);
-  }
-
   protected function json(array $data, int $status = 200): Response
   {
     return new Response(
